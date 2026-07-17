@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Daily Push Log</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel-bg: #1e293b;
+      --text: #cbd5e1;
+      --heading: #f8fafc;
+      --accent: #38bdf8;
+      --success: #10b981;
+      --border: #334155;
+      --font-mono: 'Courier New', Courier, monospace;
+      --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      margin: 0;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 800px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 1rem;
+    }
+
+    h1 {
+      color: var(--heading);
+      margin: 0;
+      font-size: 1.5rem;
+      font-weight: 500;
+    }
+
+    .date {
+      color: var(--text);
+      font-size: 0.9rem;
+    }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    button {
+      background-color: var(--panel-bg);
+      color: var(--heading);
+      border: 1px solid var(--border);
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: var(--font-sans);
+      font-size: 0.9rem;
+      transition: all 0.2s;
+    }
+
+    button:hover:not(:disabled) {
+      background-color: var(--border);
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    button.success {
+      border-color: var(--success);
+      color: var(--success);
+    }
+
+    .error-msg {
+      background-color: #7f1d1d;
+      color: #fca5a5;
+      padding: 1rem;
+      border-radius: 4px;
+      margin-bottom: 1rem;
+      display: none;
+    }
+
+    .project {
+      margin-bottom: 2rem;
+    }
+
+    .project h2 {
+      color: var(--accent);
+      font-size: 1.1rem;
+      margin: 0 0 0.5rem 0;
+      font-weight: 500;
+    }
+
+    .commits {
+      background-color: var(--panel-bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1rem;
+    }
+
+    .commit {
+      display: flex;
+      gap: 1rem;
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .commit:last-child {
+      margin-bottom: 0;
+    }
+
+    .commit-hash {
+      color: #fbbf24;
+    }
+
+    .commit-time {
+      color: #94a3b8;
+    }
+
+    .commit-msg {
+      color: var(--heading);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 3rem;
+      color: var(--text);
+      background-color: var(--panel-bg);
+      border-radius: 4px;
+      border: 1px solid var(--border);
+    }
+
+    #loading {
+      text-align: center;
+      padding: 2rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div>
+        <h1>Daily Push Log</h1>
+        <div class="date" id="current-date"></div>
+      </div>
+      <div class="controls">
+        <button id="copy-btn" disabled>Copy Summary</button>
+      </div>
+    </header>
+
+    <div id="error-container" class="error-msg"></div>
+    <div id="loading">Loading commits...</div>
+    <div id="main-panel" style="display: none;"></div>
+  </div>
+
+  <script>
+    document.getElementById('current-date').textContent = new Date().toLocaleDateString('en-US', {
+      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+    });
+
+    let rawText = '';
+
+    async function fetchSummary() {
+      const loading = document.getElementById('loading');
+      const mainPanel = document.getElementById('main-panel');
+      const errorContainer = document.getElementById('error-container');
+      const copyBtn = document.getElementById('copy-btn');
+
+      try {
+        const res = await fetch('/api/summary');
+        const data = await res.json();
+
+        loading.style.display = 'none';
+
+        if (!res.ok || !data.ok) {
+          throw new Error(data.error || 'Failed to fetch commits');
+        }
+
+        if (!data.summary || data.summary.length === 0) {
+          mainPanel.innerHTML = `
+            <div class="empty-state">
+              <p>No commits found for today.</p>
+              <p style="font-size: 0.9rem; margin-top: 0.5rem; opacity: 0.8;">
+                Check that your backend/repos.json paths are correct and GIT_AUTHOR_FILTER matches your commits.
+              </p>
+            </div>
+          `;
+          mainPanel.style.display = 'block';
+          return;
+        }
+
+        rawText = data.text;
+        copyBtn.disabled = false;
+
+        let html = '';
+        data.summary.forEach(repo => {
+          html += `
+            <div class="project">
+              <h2>[${repo.project}]</h2>
+              <div class="commits">
+                ${repo.commits.map(c => `
+                  <div class="commit">
+                    <span class="commit-hash">${c.hash}</span>
+                    <span class="commit-time">${c.time}</span>
+                    <span class="commit-msg">${c.message}</span>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          `;
+        });
+
+        mainPanel.innerHTML = html;
+        mainPanel.style.display = 'block';
+
+      } catch (err) {
+        loading.style.display = 'none';
+        errorContainer.textContent = err.message;
+        errorContainer.style.display = 'block';
+      }
+    }
+
+    document.getElementById('copy-btn').addEventListener('click', async (e) => {
+      const btn = e.target;
+      if (btn.disabled) return;
+      
+      try {
+        await navigator.clipboard.writeText(rawText);
+        const originalText = btn.textContent;
+        btn.textContent = 'Copied ✓';
+        btn.classList.add('success');
+        
+        setTimeout(() => {
+          btn.textContent = originalText;
+          btn.classList.remove('success');
+        }, 2000);
+      } catch (err) {
+        console.error('Failed to copy text: ', err);
+        // Fallback for older browsers
+        const textArea = document.createElement("textarea");
+        textArea.value = rawText;
+        document.body.appendChild(textArea);
+        textArea.select();
+        try {
+          document.execCommand('copy');
+          const originalText = btn.textContent;
+          btn.textContent = 'Copied ✓';
+          btn.classList.add('success');
+          setTimeout(() => {
+            btn.textContent = originalText;
+            btn.classList.remove('success');
+          }, 2000);
+        } catch (err) {
+          console.error('Fallback: Oops, unable to copy', err);
+        }
+        document.body.removeChild(textArea);
+      }
+    });
+
+    fetchSummary();
+  </script>
+</body>
+</html>
