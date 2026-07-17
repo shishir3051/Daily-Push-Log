@@ -5,151 +5,338 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Daily Push Log</title>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=Fira+Code&display=swap');
+
     :root {
-      --bg: #0f172a;
-      --panel-bg: #1e293b;
-      --text: #cbd5e1;
-      --heading: #f8fafc;
-      --accent: #38bdf8;
+      --bg-gradient: linear-gradient(135deg, #0b1120 0%, #17112d 100%);
+      --glass-bg: rgba(255, 255, 255, 0.03);
+      --glass-border: rgba(255, 255, 255, 0.08);
+      --text: #94a3b8;
+      --heading: #f1f5f9;
+      --accent: #8b5cf6;
+      --accent-hover: #7c3aed;
+      --accent-light: #c4b5fd;
       --success: #10b981;
-      --border: #334155;
-      --font-mono: 'Courier New', Courier, monospace;
-      --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      --danger: #ef4444;
+      --font-sans: 'Outfit', system-ui, sans-serif;
+      --font-mono: 'Fira Code', monospace;
     }
 
     body {
-      background-color: var(--bg);
+      background: var(--bg-gradient);
       color: var(--text);
       font-family: var(--font-sans);
       margin: 0;
-      padding: 2rem;
+      padding: 3rem 1.5rem;
       display: flex;
       flex-direction: column;
       align-items: center;
       min-height: 100vh;
+      background-attachment: fixed;
     }
 
     .container {
       width: 100%;
-      max-width: 800px;
+      max-width: 1400px;
     }
 
     header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 2rem;
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 1rem;
+      margin-bottom: 2.5rem;
+      border-bottom: 1px solid var(--glass-border);
+      padding-bottom: 1.5rem;
     }
 
     h1 {
       color: var(--heading);
       margin: 0;
-      font-size: 1.5rem;
-      font-weight: 500;
+      font-size: 2rem;
+      font-weight: 600;
+      background: linear-gradient(to right, #8b5cf6, #38bdf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
     }
 
     .date {
       color: var(--text);
-      font-size: 0.9rem;
+      font-size: 1rem;
+      margin-top: 0.25rem;
+      font-weight: 300;
     }
 
-    .controls {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
+    /* Glassmorphism Panels */
+    .projects-manager, .commits {
+      background: var(--glass-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
     }
 
     button {
-      background-color: var(--panel-bg);
+      background: rgba(255, 255, 255, 0.05);
       color: var(--heading);
-      border: 1px solid var(--border);
-      padding: 0.5rem 1rem;
-      border-radius: 4px;
+      border: 1px solid var(--glass-border);
+      padding: 0.6rem 1.2rem;
+      border-radius: 8px;
       cursor: pointer;
       font-family: var(--font-sans);
-      font-size: 0.9rem;
-      transition: all 0.2s;
+      font-size: 0.95rem;
+      font-weight: 500;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      backdrop-filter: blur(4px);
+      white-space: nowrap;
+      flex-shrink: 0;
     }
 
     button:hover:not(:disabled) {
-      background-color: var(--border);
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.2);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    button:active:not(:disabled) {
+      transform: translateY(0);
     }
 
     button:disabled {
-      opacity: 0.5;
+      opacity: 0.4;
       cursor: not-allowed;
     }
 
     button.success {
-      border-color: var(--success);
-      color: var(--success);
+      background: rgba(16, 185, 129, 0.1) !important;
+      border-color: var(--success) !important;
+      color: var(--success) !important;
+    }
+
+    #refresh-commits-btn {
+      background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+      border: none;
+      color: white;
+      padding: 0.8rem 2rem;
+      font-size: 1.05rem;
+      box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+    }
+
+    #refresh-commits-btn:hover {
+      background: linear-gradient(135deg, var(--accent-hover), var(--accent));
+      box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
     }
 
     .error-msg {
-      background-color: #7f1d1d;
+      background-color: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.2);
       color: #fca5a5;
-      padding: 1rem;
-      border-radius: 4px;
-      margin-bottom: 1rem;
-      display: none;
-    }
-
-    .project {
+      padding: 1rem 1.5rem;
+      border-radius: 12px;
       margin-bottom: 2rem;
+      display: none;
+      backdrop-filter: blur(8px);
     }
 
-    .project h2 {
-      color: var(--accent);
-      font-size: 1.1rem;
-      margin: 0 0 0.5rem 0;
-      font-weight: 500;
+    /* Projects Manager */
+    .projects-manager {
+      padding: 2rem;
+      margin-bottom: 2.5rem;
     }
-
-    .commits {
-      background-color: var(--panel-bg);
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      padding: 1rem;
-    }
-
-    .commit {
-      display: flex;
-      gap: 1rem;
-      font-family: var(--font-mono);
-      font-size: 0.9rem;
-      margin-bottom: 0.5rem;
-    }
-
-    .commit:last-child {
-      margin-bottom: 0;
-    }
-
-    .commit-hash {
-      color: #fbbf24;
-    }
-
-    .commit-time {
-      color: #94a3b8;
-    }
-
-    .commit-msg {
+    
+    .projects-manager h2 {
+      margin-top: 0;
+      font-size: 1.25rem;
       color: var(--heading);
+      font-weight: 500;
+      margin-bottom: 1.5rem;
+    }
+
+    .project-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem;
+      margin-bottom: 0.5rem;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      transition: background 0.2s;
+    }
+
+    .project-item:hover {
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .project-item-name {
+      font-weight: 500;
+      color: var(--accent-light);
+      font-size: 1.05rem;
+    }
+
+    .project-item-path {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      color: var(--text);
+      margin-left: 1rem;
+      opacity: 0.7;
+    }
+
+    .project-form {
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 1.5rem;
+    }
+
+    .project-form input {
+      flex: 1;
+      min-width: 0;
+      background-color: rgba(0, 0, 0, 0.2);
+      color: var(--heading);
+      border: 1px solid var(--glass-border);
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      font-family: var(--font-sans);
+      font-size: 0.95rem;
+      transition: all 0.2s;
+    }
+
+    .project-form input:focus {
+      outline: none;
+      border-color: var(--accent);
+      background-color: rgba(0, 0, 0, 0.3);
+    }
+
+    .delete-btn {
+      background: transparent;
+      border: none;
+      color: var(--danger);
+      padding: 0.4rem 0.8rem;
+      font-size: 0.85rem;
+      opacity: 0.8;
+      box-shadow: none;
+    }
+    
+    .delete-btn:hover {
+      background: rgba(239, 68, 68, 0.1);
+      color: #f87171;
+      opacity: 1;
+      box-shadow: none;
+      transform: none;
     }
 
     .empty-state {
       text-align: center;
-      padding: 3rem;
+      padding: 4rem 2rem;
       color: var(--text);
-      background-color: var(--panel-bg);
-      border-radius: 4px;
-      border: 1px solid var(--border);
     }
 
     #loading {
       text-align: center;
-      padding: 2rem;
+      padding: 3rem;
+      color: var(--accent-light);
+      font-weight: 500;
+      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    /* Tasks specific */
+    .task-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 1rem;
+      margin-bottom: 0.5rem;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      transition: all 0.2s;
+    }
+    
+    .task-row:hover {
+      background: rgba(255, 255, 255, 0.04);
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .task-text {
+      flex: 1;
+      padding-right: 1.5rem;
+      color: var(--heading);
+      line-height: 1.6;
+    }
+
+    .task-date-header {
+      margin-top: 1.5rem;
+      margin-bottom: 1rem;
+      color: var(--accent);
+      font-weight: 500;
+      font-size: 1.1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .task-date-header::before {
+      content: '';
+      display: block;
+      width: 4px;
+      height: 16px;
+      background: var(--accent);
+      border-radius: 2px;
+    }
+
+    /* Toggle Container */
+    .toggle-container {
+      display: flex;
+      align-items: center;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 8px;
+      padding: 0.25rem;
+      border: 1px solid var(--glass-border);
+    }
+    
+    .toggle-group {
+      display: flex;
+      max-width: 135px;
+      overflow-x: auto;
+      scroll-behavior: smooth;
+    }
+    
+    .toggle-group::-webkit-scrollbar {
+      height: 4px;
+    }
+    
+    .toggle-group::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 4px;
+    }
+    
+    .toggle-btn {
+      background: transparent;
+      border: none;
+      color: var(--text);
+      padding: 0.4rem 0.8rem;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+    
+    .toggle-btn:hover {
+      color: var(--heading);
+      background: rgba(255, 255, 255, 0.05);
+    }
+    
+    .toggle-btn.active {
+      background: var(--accent);
+      color: white;
+      box-shadow: 0 2px 10px rgba(139, 92, 246, 0.3);
     }
   </style>
 </head>
@@ -160,14 +347,56 @@
         <h1>Daily Push Log</h1>
         <div class="date" id="current-date"></div>
       </div>
-      <div class="controls">
-        <button id="copy-btn" disabled>Copy Summary</button>
       </div>
     </header>
 
-    <div id="error-container" class="error-msg"></div>
-    <div id="loading">Loading commits...</div>
-    <div id="main-panel" style="display: none;"></div>
+    <div style="display: flex; gap: 2rem; align-items: flex-start;">
+      <!-- Left side (Projects) -->
+      <div style="flex: 1; max-width: 50%;">
+        <div class="projects-manager glass-panel">
+          <h2>Tracked Projects</h2>
+          <div class="projects-list" id="projects-list">Loading projects...</div>
+          <form class="project-form" id="add-project-form">
+            <input type="text" id="proj-name" placeholder="Project Name (e.g. My App)" required>
+            <input type="text" id="proj-path" placeholder="Absolute Path (e.g. C:/Git/my-app)" required>
+            <button type="submit">Add Project</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Right side (Controls & Tasks) -->
+      <!-- Right side (Controls & Tasks) -->
+      <div class="projects-manager glass-panel" style="flex: 1; margin-bottom: 0;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+          <h2 style="margin: 0; font-weight: 500; font-size: 1.25rem; color: var(--heading);">AI Generated Tasks</h2>
+          <div style="display: flex; align-items: center; gap: 1rem;">
+            <div class="toggle-container">
+              <div class="toggle-group" id="timeframe-toggle">
+                <button class="toggle-btn active" data-value="midnight">1D</button>
+                <button class="toggle-btn" data-value="yesterday">2D</button>
+                <button class="toggle-btn" data-value="3 days ago">3D</button>
+                <button class="toggle-btn" data-value="4 days ago">4D</button>
+                <button class="toggle-btn" data-value="5 days ago">5D</button>
+                <button class="toggle-btn" data-value="6 days ago">6D</button>
+                <button class="toggle-btn" data-value="7 days ago">7D</button>
+              </div>
+              <div style="width: 1px; height: 16px; background: var(--glass-border); margin: 0 4px;"></div>
+              <button class="toggle-btn" id="increase-day-btn" style="color: var(--accent); font-weight: bold; padding: 0.4rem 0.6rem;">+</button>
+            </div>
+            <button id="refresh-commits-btn">Fetch Commits</button>
+          </div>
+        </div>
+        
+        <div id="error-container" class="error-msg"></div>
+        <div id="loading">Loading commits...</div>
+        
+        <div id="main-panel">
+          <div class="empty-state" style="padding: 3rem 1rem;">
+            <p>Ready to fetch your commits and generate summaries.</p>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -175,16 +404,105 @@
       weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
     });
 
-    let rawText = '';
+    document.querySelectorAll('.toggle-btn:not(#increase-day-btn)').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+        e.target.classList.add('active');
+      });
+    });
 
+    let customDays = 7;
+    document.getElementById('increase-day-btn').addEventListener('click', () => {
+      customDays++;
+      
+      const newBtn = document.createElement('button');
+      newBtn.className = 'toggle-btn active';
+      newBtn.textContent = customDays + 'D';
+      newBtn.dataset.value = customDays + ' days ago';
+      
+      newBtn.addEventListener('click', (e) => {
+        document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+        e.target.classList.add('active');
+      });
+      
+      const toggleGroup = document.getElementById('timeframe-toggle');
+      document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+      toggleGroup.appendChild(newBtn);
+      
+      // Auto-scroll to show the newly selected custom button
+      newBtn.scrollIntoView({ behavior: 'smooth', inline: 'nearest', block: 'nearest' });
+    });
+
+    let rawText = '';
+    let currentSummary = [];
+
+    // Projects Management
+    async function loadProjects() {
+      try {
+        const res = await fetch('/api/projects');
+        const data = await res.json();
+        const list = document.getElementById('projects-list');
+        
+        if (!data.projects || data.projects.length === 0) {
+          list.innerHTML = '<p style="color: #94a3b8; font-size: 0.9rem;">No projects tracked yet. Add one below!</p>';
+          return;
+        }
+
+        list.innerHTML = data.projects.map(p => `
+          <div class="project-item">
+            <div>
+              <span class="project-item-name">${p.name}</span>
+              <span class="project-item-path">${p.path}</span>
+            </div>
+            <button class="delete-btn" onclick="deleteProject('${p._id}')">Delete</button>
+          </div>
+        `).join('');
+      } catch (err) {
+        console.error('Failed to load projects', err);
+      }
+    }
+
+    document.getElementById('add-project-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = document.getElementById('proj-name').value;
+      const path = document.getElementById('proj-path').value;
+
+      try {
+        await fetch('/api/projects', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, path })
+        });
+        document.getElementById('proj-name').value = '';
+        document.getElementById('proj-path').value = '';
+        loadProjects();
+      } catch (err) {
+        console.error('Failed to add project', err);
+      }
+    });
+
+    window.deleteProject = async (id) => {
+      try {
+        await fetch(`/api/projects/${id}`, { method: 'DELETE' });
+        loadProjects();
+      } catch (err) {
+        console.error('Failed to delete project', err);
+      }
+    };
+
+    // Commits fetching
     async function fetchSummary() {
       const loading = document.getElementById('loading');
       const mainPanel = document.getElementById('main-panel');
       const errorContainer = document.getElementById('error-container');
-      const copyBtn = document.getElementById('copy-btn');
+
+      loading.style.display = 'block';
+      mainPanel.style.display = 'none';
+      errorContainer.style.display = 'none';
 
       try {
-        const res = await fetch('/api/summary');
+        const timeframe = document.querySelector('.toggle-btn.active').dataset.value;
+        const res = await fetch(`/api/summary?since=${encodeURIComponent(timeframe)}`);
         const data = await res.json();
 
         loading.style.display = 'none';
@@ -197,9 +515,6 @@
           mainPanel.innerHTML = `
             <div class="empty-state">
               <p>No commits found for today.</p>
-              <p style="font-size: 0.9rem; margin-top: 0.5rem; opacity: 0.8;">
-                Check that your backend/repos.json paths are correct and GIT_AUTHOR_FILTER matches your commits.
-              </p>
             </div>
           `;
           mainPanel.style.display = 'block';
@@ -207,25 +522,32 @@
         }
 
         rawText = data.text;
-        copyBtn.disabled = false;
-
-        let html = '';
-        data.summary.forEach(repo => {
-          html += `
-            <div class="project">
-              <h2>[${repo.project}]</h2>
-              <div class="commits">
-                ${repo.commits.map(c => `
-                  <div class="commit">
-                    <span class="commit-hash">${c.hash}</span>
-                    <span class="commit-time">${c.time}</span>
-                    <span class="commit-msg">${c.message}</span>
-                  </div>
-                `).join('')}
+        currentSummary = data.summary;
+        const tasks = rawText.split('\n').filter(t => t.trim().length > 0);
+        let taskListHtml = tasks.map(t => {
+          if (t.startsWith('**') && t.endsWith('**')) {
+            return `
+              <div class="task-date-header">
+                ${t.replace(/\*\*/g, '')}
               </div>
+            `;
+          }
+          return `
+            <div class="task-row">
+              <div class="task-text">${t}</div>
+              <button onclick="copyIndividualTask(this, \`${t.replace(/`/g, '\\`')}\`)">Copy</button>
             </div>
           `;
-        });
+        }).join('');
+
+        let html = `
+          <div style="display: flex; justify-content: flex-end; margin-bottom: 1rem;">
+            <button id="copy-btn" onclick="copySummaryText(this)">Copy All</button>
+          </div>
+          <div>
+             ${taskListHtml}
+          </div>
+        `;
 
         mainPanel.innerHTML = html;
         mainPanel.style.display = 'block';
@@ -237,44 +559,33 @@
       }
     }
 
-    document.getElementById('copy-btn').addEventListener('click', async (e) => {
-      const btn = e.target;
-      if (btn.disabled) return;
-      
+    document.getElementById('refresh-commits-btn').addEventListener('click', fetchSummary);
+
+    window.copySummaryText = async (btn) => {
       try {
         await navigator.clipboard.writeText(rawText);
+        btn.textContent = 'Copied ✓';
+        btn.classList.add('success');
+        setTimeout(() => { btn.textContent = 'Copy All'; btn.classList.remove('success'); }, 2000);
+      } catch (err) {
+        console.error('Failed to copy text: ', err);
+      }
+    };
+
+    window.copyIndividualTask = async (btn, textToCopy) => {
+      try {
+        await navigator.clipboard.writeText(textToCopy);
         const originalText = btn.textContent;
         btn.textContent = 'Copied ✓';
         btn.classList.add('success');
-        
-        setTimeout(() => {
-          btn.textContent = originalText;
-          btn.classList.remove('success');
-        }, 2000);
+        setTimeout(() => { btn.textContent = originalText; btn.classList.remove('success'); }, 2000);
       } catch (err) {
         console.error('Failed to copy text: ', err);
-        // Fallback for older browsers
-        const textArea = document.createElement("textarea");
-        textArea.value = rawText;
-        document.body.appendChild(textArea);
-        textArea.select();
-        try {
-          document.execCommand('copy');
-          const originalText = btn.textContent;
-          btn.textContent = 'Copied ✓';
-          btn.classList.add('success');
-          setTimeout(() => {
-            btn.textContent = originalText;
-            btn.classList.remove('success');
-          }, 2000);
-        } catch (err) {
-          console.error('Fallback: Oops, unable to copy', err);
-        }
-        document.body.removeChild(textArea);
       }
-    });
+    };
 
-    fetchSummary();
+    // Init
+    loadProjects();
   </script>
 </body>
 </html>
