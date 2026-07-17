@@ -262,6 +262,33 @@
       background: rgba(255, 255, 255, 0.04);
       border-color: rgba(255, 255, 255, 0.1);
     }
+    
+    .icon-btn {
+      background: transparent;
+      border: 1px solid var(--glass-border);
+      color: var(--text);
+      padding: 0.5rem;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: none;
+    }
+    .icon-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--heading);
+      transform: none;
+      box-shadow: none;
+    }
+    .icon-btn svg {
+      opacity: 0.8;
+      transition: opacity 0.2s;
+    }
+    .icon-btn:hover svg {
+      opacity: 1;
+    }
 
     .task-text {
       flex: 1;
@@ -337,7 +364,6 @@
       background: var(--accent);
       color: white;
       box-shadow: 0 2px 10px rgba(139, 92, 246, 0.3);
-    }
   </style>
 </head>
 <body>
@@ -367,22 +393,14 @@
       <!-- Right side (Controls & Tasks) -->
       <!-- Right side (Controls & Tasks) -->
       <div class="projects-manager glass-panel" style="flex: 1; margin-bottom: 0;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-          <h2 style="margin: 0; font-weight: 500; font-size: 1.25rem; color: var(--heading);">AI Generated Tasks</h2>
-          <div style="display: flex; align-items: center; gap: 1rem;">
-            <div class="toggle-container">
-              <div class="toggle-group" id="timeframe-toggle">
-                <button class="toggle-btn active" data-value="midnight">1D</button>
-                <button class="toggle-btn" data-value="yesterday">2D</button>
-                <button class="toggle-btn" data-value="3 days ago">3D</button>
-                <button class="toggle-btn" data-value="4 days ago">4D</button>
-                <button class="toggle-btn" data-value="5 days ago">5D</button>
-                <button class="toggle-btn" data-value="6 days ago">6D</button>
-                <button class="toggle-btn" data-value="7 days ago">7D</button>
-              </div>
-              <div style="width: 1px; height: 16px; background: var(--glass-border); margin: 0 4px;"></div>
-              <button class="toggle-btn" id="increase-day-btn" style="color: var(--accent); font-weight: bold; padding: 0.4rem 0.6rem;">+</button>
-            </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; gap: 1rem; flex-wrap: wrap;">
+          <h2 style="margin: 0; font-weight: 500; font-size: 1.25rem; color: var(--heading); white-space: nowrap;">AI Generated Tasks</h2>
+          <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+            <span style="color: var(--text); font-size: 0.85rem;">From:</span>
+            <input type="date" id="since-date" style="background: rgba(0, 0, 0, 0.2); border: 1px solid var(--glass-border); color: var(--heading); padding: 0.4rem 0.6rem; border-radius: 6px; font-size: 0.9rem; cursor: pointer; outline: none; color-scheme: dark;">
+            <span style="color: var(--text); font-size: 0.85rem; margin-left: 0.5rem;">To:</span>
+            <input type="date" id="until-date" style="background: rgba(0, 0, 0, 0.2); border: 1px solid var(--glass-border); color: var(--heading); padding: 0.4rem 0.6rem; border-radius: 6px; font-size: 0.9rem; cursor: pointer; outline: none; color-scheme: dark;">
+            <button id="reset-btn" style="background: rgba(255, 255, 255, 0.1); color: var(--text); border: none; padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.95rem; font-weight: 500; cursor: pointer; transition: background 0.2s; margin-left: 0.5rem;">Reset</button>
             <button id="refresh-commits-btn">Fetch Commits</button>
           </div>
         </div>
@@ -404,34 +422,8 @@
       weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
     });
 
-    document.querySelectorAll('.toggle-btn:not(#increase-day-btn)').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
-        e.target.classList.add('active');
-      });
-    });
-
-    let customDays = 7;
-    document.getElementById('increase-day-btn').addEventListener('click', () => {
-      customDays++;
-      
-      const newBtn = document.createElement('button');
-      newBtn.className = 'toggle-btn active';
-      newBtn.textContent = customDays + 'D';
-      newBtn.dataset.value = customDays + ' days ago';
-      
-      newBtn.addEventListener('click', (e) => {
-        document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
-        e.target.classList.add('active');
-      });
-      
-      const toggleGroup = document.getElementById('timeframe-toggle');
-      document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
-      toggleGroup.appendChild(newBtn);
-      
-      // Auto-scroll to show the newly selected custom button
-      newBtn.scrollIntoView({ behavior: 'smooth', inline: 'nearest', block: 'nearest' });
-    });
+    // Set default date to today
+    document.getElementById('since-date').valueAsDate = new Date();
 
     let rawText = '';
     let currentSummary = [];
@@ -450,13 +442,17 @@
 
         list.innerHTML = data.projects.map(p => `
           <div class="project-item">
-            <div>
-              <span class="project-item-name">${p.name}</span>
-              <span class="project-item-path">${p.path}</span>
+            <div style="display: flex; align-items: center; gap: 1rem;">
+              <input type="checkbox" class="project-checkbox" value="${p._id}" style="accent-color: var(--accent); width: 1.2rem; height: 1.2rem; cursor: pointer;">
+              <div>
+                <span class="project-item-name">${p.name}</span>
+                <span class="project-item-path">${p.path}</span>
+              </div>
             </div>
             <button class="delete-btn" onclick="deleteProject('${p._id}')">Delete</button>
           </div>
         `).join('');
+
       } catch (err) {
         console.error('Failed to load projects', err);
       }
@@ -501,8 +497,20 @@
       errorContainer.style.display = 'none';
 
       try {
-        const timeframe = document.querySelector('.toggle-btn.active').dataset.value;
-        const res = await fetch(`/api/summary?since=${encodeURIComponent(timeframe)}`);
+        const timeframe = document.getElementById('since-date').value || 'midnight';
+        const untilTime = document.getElementById('until-date').value || '';
+        
+        const selectedIds = Array.from(document.querySelectorAll('.project-checkbox:checked')).map(cb => cb.value);
+        if (document.querySelectorAll('.project-checkbox').length > 0 && selectedIds.length === 0) {
+          errorContainer.innerHTML = 'Please select at least one project.';
+          errorContainer.style.display = 'block';
+          loading.style.display = 'none';
+          mainPanel.style.display = 'block';
+          return;
+        }
+        const projectIdsParam = selectedIds.length > 0 ? selectedIds.join(',') : 'all';
+        
+        const res = await fetch(`/api/summary?since=${encodeURIComponent(timeframe)}&until=${encodeURIComponent(untilTime)}&projectIds=${encodeURIComponent(projectIdsParam)}`);
         const data = await res.json();
 
         loading.style.display = 'none';
@@ -514,7 +522,7 @@
         if (!data.summary || data.summary.length === 0) {
           mainPanel.innerHTML = `
             <div class="empty-state">
-              <p>No commits found for today.</p>
+              <p>No commits found for the selected timeframe.</p>
             </div>
           `;
           mainPanel.style.display = 'block';
@@ -535,7 +543,9 @@
           return `
             <div class="task-row">
               <div class="task-text">${t}</div>
-              <button onclick="copyIndividualTask(this, \`${t.replace(/`/g, '\\`')}\`)">Copy</button>
+              <button class="icon-btn" onclick="copyIndividualTask(this, \`${t.replace(/`/g, '\\`')}\`)" title="Copy">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+              </button>
             </div>
           `;
         }).join('');
@@ -560,6 +570,19 @@
     }
 
     document.getElementById('refresh-commits-btn').addEventListener('click', fetchSummary);
+
+    document.getElementById('reset-btn').addEventListener('click', () => {
+      document.getElementById('since-date').valueAsDate = new Date();
+      document.getElementById('until-date').value = '';
+      document.querySelectorAll('.project-checkbox').forEach(cb => cb.checked = false);
+      document.getElementById('error-container').style.display = 'none';
+      document.getElementById('main-panel').innerHTML = `
+        <div class="empty-state" style="padding: 3rem 1rem;">
+          <p>Ready to fetch your commits and generate summaries.</p>
+        </div>
+      `;
+      document.getElementById('main-panel').style.display = 'block';
+    });
 
     window.copySummaryText = async (btn) => {
       try {

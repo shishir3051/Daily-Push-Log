@@ -23,7 +23,9 @@ mongoose.connect(process.env.MONGODB_URI)
 app.get('/api/summary', async (req, res) => {
   try {
     const since = req.query.since || 'midnight';
-    const data = await getCommits(since);
+    const until = req.query.until || '';
+    const projectIds = req.query.projectIds || 'all';
+    const data = await getCommits(since, until, projectIds);
     
     // Automatically save to DB
     if (data.ok && data.text && !data.fromCache) {
