@@ -364,6 +364,122 @@
       background: var(--accent);
       color: white;
       box-shadow: 0 2px 10px rgba(139, 92, 246, 0.3);
+    }
+
+    /* ── nProject integration ── */
+    #open-nproject-btn {
+      background: rgba(99, 102, 241, 0.1);
+      border-color: rgba(99, 102, 241, 0.3);
+      color: #a5b4fc;
+    }
+    #open-nproject-btn:hover:not(:disabled) {
+      background: rgba(99, 102, 241, 0.2);
+      border-color: rgba(99, 102, 241, 0.5);
+      color: white;
+    }
+    #send-nproject-btn {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      border: none;
+      color: white;
+      padding: 0.65rem 1.5rem;
+      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+    }
+    #send-nproject-btn:hover:not(:disabled) {
+      background: linear-gradient(135deg, #4f46e5, #7c3aed);
+      box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+    }
+    .nproject-panel {
+      margin-top: 1.5rem;
+      padding: 1.25rem 1.5rem;
+      background: rgba(99, 102, 241, 0.05);
+      border: 1px solid rgba(99, 102, 241, 0.2);
+      border-radius: 12px;
+      animation: fadeIn 0.3s ease;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Modal Overlay Styles */
+    .nproject-modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .nproject-modal-overlay.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+    .nproject-modal {
+      background: #17112d; /* dark opaque to stand out */
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      box-shadow: 0 15px 50px rgba(0, 0, 0, 0.4);
+      padding: 2rem;
+      width: 100%;
+      max-width: 650px;
+      transform: translateY(20px) scale(0.95);
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .nproject-modal-overlay.active .nproject-modal {
+      transform: translateY(0) scale(1);
+    }
+    .nproject-modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+    .close-modal-btn {
+      background: transparent;
+      border: none;
+      color: var(--text);
+      font-size: 1.75rem;
+      cursor: pointer;
+      padding: 0.2rem 0.5rem;
+      line-height: 1;
+      opacity: 0.7;
+      transition: all 0.2s;
+    }
+    .close-modal-btn:hover {
+      opacity: 1;
+      transform: scale(1.1);
+      background: transparent;
+      color: var(--heading);
+      box-shadow: none;
+    }
+
+    .nproject-select {
+      flex: 1;
+      min-width: 220px;
+      background: rgba(0,0,0,0.2);
+      color: var(--heading);
+      border: 1px solid var(--glass-border);
+      padding: 0.65rem 1rem;
+      border-radius: 8px;
+      font-family: var(--font-sans);
+      font-size: 0.95rem;
+      cursor: pointer;
+      outline: none;
+      color-scheme: dark;
+    }
+    .nproject-select:focus {
+      border-color: #6366f1;
+    }
+    .nproject-select option {
+      background-color: #17112d; /* matching dark theme background */
+      color: var(--heading);
+    }
   </style>
 </head>
 <body>
@@ -373,8 +489,30 @@
         <h1>Daily Push Log</h1>
         <div class="date" id="current-date"></div>
       </div>
+      <div id="auth-section" style="display: flex; align-items: center; gap: 1rem;">
+        <!-- Filled dynamically by JS -->
       </div>
     </header>
+
+  <!-- Login Modal Overlay -->
+  <div id="login-modal-overlay" class="nproject-modal-overlay active" style="z-index: 2000; background: rgba(10, 5, 25, 0.95);">
+    <div class="nproject-modal" style="max-width: 450px;">
+      <h2 style="margin-top: 0; margin-bottom: 0.5rem; color: var(--heading);">Sign in to nProject</h2>
+      <p style="color: var(--text); font-size: 0.9rem; margin-bottom: 1.5rem;">Please enter your nProject API token to continue.</p>
+      
+      <div style="margin-bottom: 1.5rem;">
+        <label style="display:block; font-size:0.85rem; color:var(--text); margin-bottom:0.4rem;">Personal Access Token</label>
+        <input type="password" id="login-token" placeholder="Paste your API token here" style="width:100%; box-sizing:border-box; background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); color: var(--heading); padding: 0.75rem 1rem; border-radius: 8px; outline: none; font-family: monospace;">
+        <div style="margin-top: 0.5rem; font-size: 0.8rem; color: #64748b;">
+          <a href="https://nproject/my/access_tokens" target="_blank" style="color: #8b5cf6; text-decoration: none;">Get your token here</a>
+        </div>
+      </div>
+      
+      <button id="login-btn" onclick="performLogin()" style="width: 100%; background: linear-gradient(135deg, #6366f1, #8b5cf6); border: none; color: white; padding: 0.75rem; border-radius: 8px; font-weight: 500; font-size: 1rem; cursor: pointer; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3); transition: opacity 0.2s;">Sign In</button>
+      
+      <div id="login-status" style="margin-top:1rem; font-size:0.9rem; display:none; color: var(--danger);"></div>
+    </div>
+  </div>
 
     <div style="display: flex; gap: 2rem; align-items: flex-start;">
       <!-- Left side (Projects) -->
@@ -415,6 +553,32 @@
         </div>
       </div>
     </div>
+    </div>
+  </div>
+
+  <!-- Modal Overlay -->
+  <div id="nproject-modal-overlay" class="nproject-modal-overlay">
+    <div class="nproject-modal" style="max-width: 650px; max-height: 85vh; display: flex; flex-direction: column;">
+      <div class="nproject-modal-header" style="flex-shrink: 0;">
+        <p style="margin:0; color:var(--heading); font-size:1.15rem; font-weight:500; display:flex; align-items:center; gap:0.5rem;">
+          <svg width="20" height="20" fill="none" stroke="#a5b4fc" stroke-width="2" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          Send AI Tasks to nProject as Child Tasks
+        </p>
+        <button class="close-modal-btn" onclick="closeNprojectPanel()">&times;</button>
+      </div>
+
+      <div id="nproject-groups-container" style="overflow-y: auto; flex-grow: 1; padding-right: 10px; margin-bottom: 1.5rem;">
+        <!-- Dynamically injected groups will go here -->
+      </div>
+
+      <div style="flex-shrink: 0; display:flex; flex-direction: column; gap:1rem;">
+        <div style="display:flex; gap:1rem; align-items:center;">
+          <button id="send-nproject-btn" onclick="sendToNproject()" style="background: linear-gradient(135deg, #6366f1, #8b5cf6); border: none; color: white; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 500; font-size: 1rem; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);">Send All Groups</button>
+          <span style="color:var(--text); font-size:0.9rem;" id="nproject-task-count"></span>
+        </div>
+        <div id="nproject-status" style="font-size:0.95rem; line-height:1.5; display:none;"></div>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -428,10 +592,101 @@
     let rawText = '';
     let currentSummary = [];
 
+    // --- Authentication ---
+    let nprojectToken = localStorage.getItem('nprojectToken');
+    let nprojectUser = JSON.parse(localStorage.getItem('nprojectUser') || 'null');
+
+    async function checkAuth() {
+      const loginOverlay = document.getElementById('login-modal-overlay');
+      const authSection = document.getElementById('auth-section');
+      if (nprojectToken && nprojectUser) {
+        loginOverlay.classList.remove('active');
+        authSection.innerHTML = `
+          <span style="color: var(--heading); font-size: 0.95rem;">${nprojectUser.name}</span>
+          <button onclick="logout()" style="background: rgba(255, 0, 0, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); padding: 0.4rem 0.8rem; border-radius: 6px; font-size: 0.85rem; cursor: pointer;">Logout</button>
+        `;
+        // Load projects after login
+        loadProjects();
+      } else {
+        loginOverlay.classList.add('active');
+        authSection.innerHTML = '';
+      }
+    }
+
+    async function performLogin() {
+      const tokenInput = document.getElementById('login-token').value.trim();
+      const status = document.getElementById('login-status');
+      const btn = document.getElementById('login-btn');
+      
+      if (!tokenInput) {
+        status.textContent = 'Please enter an API token';
+        status.style.display = 'block';
+        return;
+      }
+      
+      btn.disabled = true;
+      btn.textContent = 'Authenticating...';
+      status.style.display = 'none';
+
+      try {
+        const res = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: tokenInput })
+        });
+        const data = await res.json();
+        
+        if (data.ok) {
+          nprojectToken = tokenInput;
+          nprojectUser = data.user;
+          localStorage.setItem('nprojectToken', nprojectToken);
+          localStorage.setItem('nprojectUser', JSON.stringify(nprojectUser));
+          document.getElementById('login-token').value = '';
+          checkAuth();
+        } else {
+          status.textContent = data.error || 'Authentication failed';
+          status.style.display = 'block';
+        }
+      } catch (err) {
+        status.textContent = err.message;
+        status.style.display = 'block';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Sign In';
+      }
+    }
+
+    window.logout = () => {
+      nprojectToken = null;
+      nprojectUser = null;
+      localStorage.removeItem('nprojectToken');
+      localStorage.removeItem('nprojectUser');
+      
+      // Clear the screen so old tasks don't show for a new user
+      document.getElementById('error-container').style.display = 'none';
+      document.getElementById('main-panel').innerHTML = `
+        <div class="empty-state" style="padding: 3rem 1rem;">
+          <p>Ready to fetch your commits and generate summaries.</p>
+        </div>
+      `;
+      
+      checkAuth();
+    };
+
+
     // Projects Management
+    window.handleSingleProjectSelection = (checkbox) => {
+      if (checkbox.checked) {
+        document.querySelectorAll('.project-checkbox').forEach(cb => {
+          if (cb !== checkbox) cb.checked = false;
+        });
+      }
+    };
+
     async function loadProjects() {
       try {
-        const res = await fetch('/api/projects');
+        const authorParam = nprojectUser ? nprojectUser.name : '';
+        const res = await fetch(`/api/projects?author=${encodeURIComponent(authorParam)}`);
         const data = await res.json();
         const list = document.getElementById('projects-list');
         
@@ -443,7 +698,7 @@
         list.innerHTML = data.projects.map(p => `
           <div class="project-item">
             <div style="display: flex; align-items: center; gap: 1rem;">
-              <input type="checkbox" class="project-checkbox" value="${p._id}" style="accent-color: var(--accent); width: 1.2rem; height: 1.2rem; cursor: pointer;">
+              <input type="checkbox" class="project-checkbox" value="${p._id}" onchange="handleSingleProjectSelection(this)" style="accent-color: var(--accent); width: 1.2rem; height: 1.2rem; cursor: pointer;">
               <div>
                 <span class="project-item-name">${p.name}</span>
                 <span class="project-item-path">${p.path}</span>
@@ -462,12 +717,13 @@
       e.preventDefault();
       const name = document.getElementById('proj-name').value;
       const path = document.getElementById('proj-path').value;
+      const author = nprojectUser ? nprojectUser.name : '';
 
       try {
         await fetch('/api/projects', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, path })
+          body: JSON.stringify({ name, path, author })
         });
         document.getElementById('proj-name').value = '';
         document.getElementById('proj-path').value = '';
@@ -509,8 +765,11 @@
           return;
         }
         const projectIdsParam = selectedIds.length > 0 ? selectedIds.join(',') : 'all';
+        const authorParam = nprojectUser ? nprojectUser.name : '';
         
-        const res = await fetch(`/api/summary?since=${encodeURIComponent(timeframe)}&until=${encodeURIComponent(untilTime)}&projectIds=${encodeURIComponent(projectIdsParam)}`);
+        // Append a timestamp to the URL to explicitly bypass any browser-level caching
+        const cacheBuster = `&_t=${Date.now()}`;
+        const res = await fetch(`/api/summary?since=${encodeURIComponent(timeframe)}&until=${encodeURIComponent(untilTime)}&projectIds=${encodeURIComponent(projectIdsParam)}&author=${encodeURIComponent(authorParam)}${cacheBuster}`);
         const data = await res.json();
 
         loading.style.display = 'none';
@@ -532,17 +791,20 @@
         rawText = data.text;
         currentSummary = data.summary;
         const tasks = rawText.split('\n').filter(t => t.trim().length > 0);
+        let currentTaskDate = '';
         let taskListHtml = tasks.map(t => {
           if (t.startsWith('**') && t.endsWith('**')) {
+            currentTaskDate = t.replace(/\*\*/g, '').trim();
             return `
               <div class="task-date-header">
-                ${t.replace(/\*\*/g, '')}
+                ${currentTaskDate}
               </div>
             `;
           }
           return `
-            <div class="task-row">
-              <div class="task-text">${t}</div>
+            <div class="task-row" data-date="${currentTaskDate}" style="display: flex; align-items: flex-start; gap: 0.5rem;">
+              <input type="checkbox" class="send-nproject-checkbox" checked style="accent-color: var(--accent); margin-top: 0.2rem; cursor: pointer;" title="Select this task to send to nProject">
+              <div class="task-text" style="flex: 1;">${t}</div>
               <button class="icon-btn" onclick="copyIndividualTask(this, \`${t.replace(/`/g, '\\`')}\`)" title="Copy">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
               </button>
@@ -550,9 +812,11 @@
           `;
         }).join('');
 
+        nprojectProjectsLoaded = false;
         let html = `
-          <div style="display: flex; justify-content: flex-end; margin-bottom: 1rem;">
+          <div style="display: flex; justify-content: flex-end; margin-bottom: 1rem; gap: 0.75rem;">
             <button id="copy-btn" onclick="copySummaryText(this)">Copy All</button>
+            <button id="open-nproject-btn" onclick="openNprojectPanel()">&#8593; Send to nProject</button>
           </div>
           <div>
              ${taskListHtml}
@@ -598,17 +862,316 @@
     window.copyIndividualTask = async (btn, textToCopy) => {
       try {
         await navigator.clipboard.writeText(textToCopy);
-        const originalText = btn.textContent;
+        const originalHTML = btn.innerHTML;
         btn.textContent = 'Copied ✓';
         btn.classList.add('success');
-        setTimeout(() => { btn.textContent = originalText; btn.classList.remove('success'); }, 2000);
+        setTimeout(() => { btn.innerHTML = originalHTML; btn.classList.remove('success'); }, 2000);
       } catch (err) {
         console.error('Failed to copy text: ', err);
       }
     };
 
+    // ── nProject integration ──────────────────────────────────────────────────
+    let nprojectProjectsCache = null;
+
+    window.openNprojectPanel = async () => {
+      const modalOverlay = document.getElementById('nproject-modal-overlay');
+      if (!modalOverlay) return;
+      
+      const status = document.getElementById('nproject-status');
+      if (status) {
+        status.style.display = 'none';
+        status.innerHTML = '';
+      }
+
+      modalOverlay.classList.add('active');
+
+      const checkedTasks = Array.from(document.querySelectorAll('.task-row'))
+        .filter(row => {
+          const cb = row.querySelector('.send-nproject-checkbox');
+          return cb && cb.checked;
+        })
+        .map(row => ({
+          text: row.querySelector('.task-text').textContent.trim(),
+          date: row.getAttribute('data-date') || ''
+        }))
+        .filter(item => item.text.startsWith('* '))
+        .map(item => ({ text: item.text.replace(/^\*\s*/, ''), date: item.date }));
+
+      const countEl = document.getElementById('nproject-task-count');
+      if (countEl) countEl.textContent = `${checkedTasks.length} task(s) selected`;
+
+      const groupsContainer = document.getElementById('nproject-groups-container');
+      groupsContainer.innerHTML = '<p style="color:var(--text); padding: 2rem; text-align: center;">Loading groups...</p>';
+
+      // Group tasks by tag (each task keeps the date of its commit-day header)
+      const groups = {};
+      checkedTasks.forEach(item => {
+        const match = item.text.match(/^\[(.*?)\]\s*(.*)/);
+        const tag = match ? match[1] : 'Untagged';
+        if (!groups[tag]) groups[tag] = [];
+        groups[tag].push({ subject: match ? match[2] : item.text, date: item.date });
+      });
+
+      // Fetch projects if not cached
+      if (!nprojectProjectsCache) {
+        try {
+          const res = await fetch('/api/nproject/projects', {
+            headers: { 'x-nproject-token': nprojectToken }
+          });
+          const data = await res.json();
+          if (!data.ok) throw new Error(data.error);
+          nprojectProjectsCache = data.projects;
+        } catch (err) {
+          groupsContainer.innerHTML = `<p style="color:var(--danger); padding: 2rem;">Failed to load projects: ${err.message}</p>`;
+          return;
+        }
+      }
+
+      const projectsHtml = '<option value="">— Select project (required) —</option>' +
+        nprojectProjectsCache.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+
+      let html = '';
+      Object.entries(groups).forEach(([tag, tasks], index) => {
+        const safeTag = tag.replace(/[^a-zA-Z0-9]/g, '_') + '_' + index;
+        
+        html += `
+          <div class="group-container" data-tag="${tag}" style="background: rgba(0,0,0,0.2); padding: 0.75rem; border-radius: 8px; margin-bottom: 0.75rem; border: 1px solid var(--glass-border);">
+            <div style="margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
+              <h4 style="margin: 0; color: var(--heading); font-size: 0.95rem;">
+                <span style="background: rgba(99, 102, 241, 0.2); color: #a5b4fc; padding: 0.15rem 0.4rem; border-radius: 4px; font-size: 0.8rem; margin-right: 0.4rem;">[${tag}]</span>
+                ${tasks.length} task(s)
+              </h4>
+            </div>
+            
+            <!-- Hidden inputs to store tasks for this group -->
+            ${tasks.map(t => `<input type="hidden" class="group-task-value" data-date="${t.date}" value="${t.subject.replace(/"/g, '&quot;')}">`).join('')}
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem; margin-bottom:0.75rem;">
+              <div>
+                <label style="display:block; font-size:0.75rem; color:var(--text); margin-bottom:0.2rem;">1. Select Project <span style="color:var(--danger);">*</span></label>
+                <select class="nproject-select project-select" style="width:100%; padding: 0.4rem 0.6rem; font-size: 0.85rem;" onchange="loadNprojectWorkPackages(this.value, '${safeTag}')">
+                  ${projectsHtml}
+                </select>
+              </div>
+              <div>
+                <label style="display:block; font-size:0.75rem; color:var(--text); margin-bottom:0.2rem;">2. Parent Story / WP</label>
+                <select id="story-select-${safeTag}" class="nproject-select story-select" style="width:100%; padding: 0.4rem 0.6rem; font-size: 0.85rem;" disabled>
+                  <option value="">— Select project first —</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <label style="display:block; font-size:0.75rem; color:var(--text); margin-bottom:0.2rem;">3. Time Entry Activity</label>
+              <select id="activity-select-${safeTag}" class="nproject-select activity-select" style="width:100%; padding: 0.4rem 0.6rem; font-size: 0.85rem;" disabled>
+                <option value="">— Select project first —</option>
+              </select>
+            </div>
+            <div class="group-status" style="margin-top: 0.5rem; font-size: 0.8rem; display:none;"></div>
+          </div>
+        `;
+      });
+      
+      if (Object.keys(groups).length === 0) {
+        html = '<p style="color:var(--danger); padding: 2rem; text-align: center;">No tasks selected.</p>';
+      }
+      
+      groupsContainer.innerHTML = html;
+    };
+
+    window.closeNprojectPanel = () => {
+      const modalOverlay = document.getElementById('nproject-modal-overlay');
+      if (modalOverlay) {
+        modalOverlay.classList.remove('active');
+        const groupsContainer = document.getElementById('nproject-groups-container');
+        if (groupsContainer) groupsContainer.innerHTML = '';
+        const status = document.getElementById('nproject-status');
+        if (status) {
+          status.style.display = 'none';
+          status.innerHTML = '';
+        }
+        const btn = document.getElementById('send-nproject-btn');
+        if (btn) {
+          btn.textContent = 'Send All Groups';
+          btn.disabled = false;
+        }
+      }
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const overlay = document.getElementById('nproject-modal-overlay');
+      if (overlay) {
+        overlay.addEventListener('click', (e) => {
+          if (e.target === overlay) closeNprojectPanel();
+        });
+      }
+    });
+
+    window.loadNprojectWorkPackages = async (projectId, safeTag) => {
+      const storySelect = document.getElementById(`story-select-${safeTag}`);
+      const actSelect = document.getElementById(`activity-select-${safeTag}`);
+      
+      if (!projectId) {
+        storySelect.innerHTML = '<option value="">— Select project first —</option>';
+        storySelect.disabled = true;
+        actSelect.innerHTML = '<option value="">— Select project first —</option>';
+        actSelect.disabled = true;
+        return;
+      }
+      
+      storySelect.innerHTML = '<option value="">Loading work packages…</option>';
+      storySelect.disabled = true;
+      actSelect.innerHTML = '<option value="">Loading activities…</option>';
+      actSelect.disabled = true;
+      
+      try {
+        const res  = await fetch(`/api/nproject/workpackages/${projectId}`, {
+          headers: { 'x-nproject-token': nprojectToken }
+        });
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error);
+        
+        storySelect.disabled = false;
+        const bySprint = {};
+        data.workpackages.forEach(wp => {
+          if (wp.type && wp.type.toLowerCase() !== 'story') return;
+          const sprint = wp.version || 'No Sprint';
+          (bySprint[sprint] = bySprint[sprint] || []).push(wp);
+        });
+        let opts = '<option value="">— Standalone (no parent) —</option>';
+        for (const [sprint, wps] of Object.entries(bySprint)) {
+          opts += `<optgroup label="${sprint}">`;
+          opts += wps.map(wp => `<option value="${wp.id}">${wp.id} ${wp.type}: ${wp.subject}</option>`).join('');
+          opts += '</optgroup>';
+        }
+        storySelect.innerHTML = opts;
+
+        if (data.workpackages.length > 0) {
+          try {
+            const actRes = await fetch(`/api/nproject/activities/${data.workpackages[0].id}`, {
+              headers: { 'x-nproject-token': nprojectToken }
+            });
+            const actData = await actRes.json();
+            if (actData.ok && actData.activities) {
+              actSelect.disabled = false;
+              actSelect.innerHTML = '<option value="">— Select Activity —</option>' + 
+                actData.activities.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
+            } else {
+              actSelect.innerHTML = '<option value="">No activities found</option>';
+            }
+          } catch (e) {
+            console.error('Failed to load activities', e);
+            actSelect.innerHTML = '<option value="">Failed to load</option>';
+          }
+        } else {
+            actSelect.innerHTML = '<option value="">No context for activities</option>';
+        }
+      } catch (err) {
+        storySelect.disabled = false;
+        storySelect.innerHTML = `<option value="">Error: ${err.message}</option>`;
+        actSelect.innerHTML = `<option value="">Error: ${err.message}</option>`;
+      }
+    };
+
+    window.sendToNproject = async () => {
+      const groups = Array.from(document.querySelectorAll('.group-container'));
+      const status = document.getElementById('nproject-status');
+      const btn    = document.getElementById('send-nproject-btn');
+      
+      if (groups.length === 0) return;
+
+      // Project is required for every group — block the send if any is missing.
+      groups.forEach(g => { g.querySelector('.project-select').style.borderColor = ''; });
+      const missingProject = groups.filter(g => !g.querySelector('.project-select').value);
+      if (missingProject.length > 0) {
+        missingProject.forEach(g => {
+          g.querySelector('.project-select').style.borderColor = 'var(--danger)';
+          const gs = g.querySelector('.group-status');
+          gs.style.display = 'block';
+          gs.innerHTML = '<span style="color:var(--danger);">Please select a project for this group.</span>';
+        });
+        status.style.display = 'block';
+        status.innerHTML = '<span style="color:var(--danger);">Select a project for each group before sending.</span>';
+        return;
+      }
+
+      const commitDate = document.getElementById('since-date').value;
+
+      btn.disabled = true;
+      btn.textContent = 'Sending...';
+      status.style.display = 'none';
+
+      let totalSuccess = 0;
+      let totalFailed = 0;
+      let hasErrors = false;
+
+      for (const group of groups) {
+        const groupTag = group.getAttribute('data-tag');
+        const projectId = group.querySelector('.project-select').value;
+        const parentId = group.querySelector('.story-select').value || '';
+        const activityId = group.querySelector('.activity-select').value || '';
+        const groupStatus = group.querySelector('.group-status');
+        
+        groupStatus.style.display = 'block';
+        
+        if (!projectId) {
+          groupStatus.innerHTML = '<span style="color:var(--text);">Skipped (No project selected)</span>';
+          continue; // Skip this group if no project selected
+        }
+
+        const tasksToCreate = Array.from(group.querySelectorAll('.group-task-value'))
+                                   .map(input => ({ subject: input.value, date: input.getAttribute('data-date') || '' }));
+                                   
+        if (tasksToCreate.length === 0) continue;
+
+        groupStatus.innerHTML = '<span style="color:var(--text);">Sending...</span>';
+
+        try {
+          const res = await fetch('/api/send-to-nproject', {
+            method: 'POST',
+            headers: { 
+              'Content-Type': 'application/json',
+              'x-nproject-token': nprojectToken 
+            },
+            body: JSON.stringify({ projectId, parentId, tasks: tasksToCreate, date: commitDate, activityId })
+          });
+          const data = await res.json();
+          
+          if (data.ok) {
+            totalSuccess += data.created;
+            totalFailed += data.failed || 0;
+            const parentLabel = parentId ? ` under #${parentId}` : '';
+            groupStatus.innerHTML = `<span style="color:var(--success);">&#10003; ${data.created} created${parentLabel}${data.failed ? ` &middot; ${data.failed} failed` : ''}</span>`;
+            if(data.failed) hasErrors = true;
+          } else {
+            hasErrors = true;
+            const msg = data.errors?.length ? data.errors.join('<br>') : (data.error || 'Unknown error');
+            groupStatus.innerHTML = `<span style="color:var(--danger);">&#10007; ${msg}</span>`;
+          }
+        } catch (err) {
+          hasErrors = true;
+          groupStatus.innerHTML = `<span style="color:var(--danger);">&#10007; ${err.message}</span>`;
+        }
+      }
+
+      status.style.display = 'block';
+      if (hasErrors) {
+        status.innerHTML = `<span style="color:var(--danger);">Finished with errors. Check individual groups.</span>`;
+        btn.textContent = 'Retry';
+        btn.disabled = false;
+      } else if (totalSuccess > 0) {
+        status.innerHTML = `<span style="color:var(--success);">&#10003; Successfully sent ${totalSuccess} tasks total.</span>`;
+        btn.textContent = 'Sent &#10003;';
+        btn.classList.add('success');
+      } else {
+        status.innerHTML = `<span style="color:var(--text);">No tasks were sent. (Make sure projects are selected)</span>`;
+        btn.textContent = 'Retry';
+        btn.disabled = false;
+      }
+    };
+
     // Init
-    loadProjects();
+    checkAuth();
   </script>
 </body>
 </html>
